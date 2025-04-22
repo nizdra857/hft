@@ -1,0 +1,159 @@
+global:
+  storageClass: "standard"
+
+replicaCount: 3
+
+replication:
+  enabled: true
+  synchronousMode: true
+  primaryAffinity:
+    podAntiAffinity: "soft"
+
+auth:
+  username: "postgres"
+  password: "yourpassword"
+  database: "tradingdb"
+
+persistence:
+  enabled: true
+  storageClass: "standard"
+  size: 8Gi
+
+primary:
+  persistence:
+    enabled: true
+    size: 10Gi
+
+replica:
+  persistence:
+    enabled: true
+    size: 10Gi
+
+pgbouncer:
+  enabled: true
+  image:
+    repository: "bitnami/pgbouncer"
+    tag: "latest"
+  replicas: 1
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  config:
+    pool_size: 50
+    default_pool_size: 20
+    max_client_conn: 200
+
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  backupType: "pg_dump"
+  retentionPolicy: "7d"
+  # storage:
+  #   backupLocation: "s3://your-backup-bucket/postgresql-backups/"
+  #   backupAccessKey: "AWS_ACCESS_KEY"
+  #   backupSecretKey: "AWS_SECRET_KEY"
+
+indexing:
+  enabled: true
+  trading_data:
+    - name: "idx_symbol"
+      table: "trades"
+      columns: ["symbol"]
+      type: "btree"
+    - name: "idx_timestamp"
+      table: "trades"
+      columns: ["timestamp"]
+      type: "btree"
+    - name: "idx_price"
+      table: "trades"
+      columns: ["price"]
+      type: "btree"
+    - name: "idx_symbol_price"
+      table: "trades"
+      columns: ["symbol", "price"]
+      type: "btree"
+
+metrics:
+  enabled: false
+  # serviceMonitor:
+  #   enabled: true
+  #   namespace: monitoring
+  #   interval: 30s
+  #   scrapeTimeout: 10s
+  #   labels:
+  #     release: kube-prometheus
+  # customMetrics:
+  #   enabled: true
+  # exporter:
+  #   image:
+  #     registry: docker.io
+  #     repository: bitnami/postgres-exporter
+  #     tag: 0.17.1-debian-12-r5
+  #   extraEnvVars:
+  #     - name: DATA_SOURCE_URI
+  #       value: "localhost:5432/postgres?sslmode=disable"
+  #     - name: DATA_SOURCE_USER
+  #       value: "postgres"
+  #     - name: DATA_SOURCE_PASS
+  #       valueFrom:
+  #         secretKeyRef:
+  #           name: postgresql
+  #           key: postgres-password
+
+
+patroni:
+  enabled: true
+  config:
+    replication:
+      mode: "synchronous"
+    loopWait: 10
+    ttl: 30
+
+extraConfiguration: |
+  max_connections = 500
+  shared_buffers = 1GB
+  work_mem = 16MB
+  maintenance_work_mem = 256MB
+  log_statement = 'all'
+  log_duration = on
+
+initdbScripts:
+  01_create_tables.sql: |
+    CREATE TABLE IF NOT EXISTS trades (
+      id SERIAL PRIMARY KEY,
+      symbol VARCHAR(50) NOT NULL,
+      price DECIMAL NOT NULL,
+      volume INT NOT NULL,
+      timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+  02_create_indexes.sql: |
+    CREATE INDEX IF NOT EXISTS idx_symbol ON trades (symbol);
+    CREATE INDEX IF NOT EXISTS idx_timestamp ON trades (timestamp);
+    CREATE INDEX IF NOT EXISTS idx_price ON trades (price);
+    CREATE INDEX IF NOT EXISTS idx_symbol_price ON trades (symbol, price);
+
+env:
+  - name: "POSTGRES_PASSWORD"
+    value: "yourpassword"
+
+failover:
+  enabled: true
+  mode: "synchronous"
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
