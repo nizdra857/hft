@@ -2,10 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: trading-engine
-  labels:
-    app: trading-engine
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: trading-engine
@@ -14,16 +12,21 @@ spec:
       labels:
         app: trading-engine
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - trading-engine
+                topologyKey: "kubernetes.io/hostname"
       containers:
         - name: trading-engine
           image: trading-engine:latest
-          # imagePullPolicy: Never
+          imagePullPolicy: Never
           ports:
-            - containerPort: 9000  # adjust to your app’s port
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "64Mi"
-            limits:
-              cpu: "300m"
-              memory: "128Mi"
+            - containerPort: 8080

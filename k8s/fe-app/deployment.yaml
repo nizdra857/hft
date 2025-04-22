@@ -2,10 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: fe-app
-  labels:
-    app: fe-app
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: fe-app
@@ -14,28 +12,21 @@ spec:
       labels:
         app: fe-app
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - fe-app
+                topologyKey: "kubernetes.io/hostname"
       containers:
         - name: fe-app
           image: fe-app:latest
-          # imagePullPolicy: Never
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8000
-            initialDelaySeconds: 2
-            periodSeconds: 5
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "256Mi"
