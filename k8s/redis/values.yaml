@@ -1,0 +1,49 @@
+global:
+  storageClass: "standard"
+
+replica:
+  replicaCount: 3  # Redis replication for high availability
+
+persistence:
+  enabled: true
+  storageClass: "standard"   # Ensure the correct storage class
+  size: 8Gi
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+auth:
+  enabled: true
+  password: "redispassword"   # Set your password for Redis
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    labels:
+      release: kube-prometheus
+
+cluster:
+  enabled: true   # Enable Redis Cluster mode
+  slaveCount: 2   # Number of slave nodes per master
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+# Additional configuration if needed for monitoring
+extraEnvVars: |
+  - name: REDIS_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: redis-password-secret
+        key: password
