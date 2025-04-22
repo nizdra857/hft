@@ -1,0 +1,128 @@
+global:
+  storageClass: "standard"
+
+replicaCount: 3
+
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+persistence:
+  enabled: true
+  storageClass: "standard"
+  size: 8Gi
+
+metrics:
+  enabled: true
+  plugins: "rabbitmq_prometheus"
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    labels:
+      release: kube-prometheus
+
+clustering:
+  enabled: true
+  forceBoot: true
+
+auth:
+  username: admin
+  password: adminpassword
+  erlangCookie: supersecreterlangcookie
+
+extraConfiguration: |-
+  # Default durable queues
+  default_vhost = /
+  default_user = admin
+  default_pass = adminpassword
+  default_permissions.configure = .*
+  default_permissions.read = .*
+  default_permissions.write = .*
+
+  # Enable priority queues plugin
+  queue_master_locator = min-masters
+  loopback_users.guest = false
+
+plugins: "rabbitmq_management,rabbitmq_prometheus,rabbitmq_shovel,rabbitmq_shovel_management,rabbitmq_priority_queue"
+
+extraPlugins: rabbitmq_priority_queue
+
+loadDefinition:
+  enabled: false
+  # existingSecret: ""
+  # configMap: "rabbitmq-load-def"
+
+definitions:
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: rabbitmq-load-def
+  data:
+    load_definition.json: |
+      {
+        "users": [
+          {
+            "name": "admin",
+            "password": "adminpassword",
+            "tags": "administrator"
+          }
+        ],
+        "vhosts": [
+          {
+            "name": "/"
+          }
+        ],
+        "permissions": [
+          {
+            "user": "admin",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+          }
+        ],
+        "queues": [
+          {
+            "name": "trade_queue",
+            "vhost": "/",
+            "durable": true,
+            "arguments": {
+              "x-dead-letter-exchange": "dlx",
+              "x-max-priority": 10
+            }
+          },
+          {
+            "name": "dead_letter_queue",
+            "vhost": "/",
+            "durable": true
+          }
+        ],
+        "exchanges": [
+          {
+            "name": "dlx",
+            "vhost": "/",
+            "type": "direct",
+            "durable": true
+          }
+        ],
+        "bindings": [
+          {
+            "source": "dlx",
+            "vhost": "/",
+            "destination": "dead_letter_queue",
+            "destination_type": "queue",
+            "routing_key": "dead"
+          }
+        ]
+      }
