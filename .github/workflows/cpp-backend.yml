@@ -15,6 +15,7 @@ env:
   GKE_ZONE: ${{ secrets.GKE_ZONE }}
   DEPLOYMENT_NAME: hft-cpp
   IMAGE_NAME: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/hft-cpp
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 jobs:
   build-deploy:
     runs-on: ubuntu-latest

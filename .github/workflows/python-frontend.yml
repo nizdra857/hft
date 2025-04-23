@@ -12,6 +12,7 @@ env:
   GKE_ZONE: ${{ secrets.GKE_ZONE }}
   DEPLOYMENT_NAME: fe-app
   IMAGE_NAME: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fe-app
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
 jobs:
   build-and-deploy:
