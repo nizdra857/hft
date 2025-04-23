@@ -37,8 +37,7 @@ jobs:
 
     - name: Build Docker image
       run: |
-        cd docker/fe
-        docker build -f .\docker\cpp-trading-engine\Dockerfile -t $IMAGE_TAG .
+        docker build -f docker/fe/Dockerfile -t $IMAGE_TAG .
 
     # - name: Push image to Docker Hub
     #   run: |
