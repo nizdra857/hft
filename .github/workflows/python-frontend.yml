@@ -37,7 +37,7 @@ jobs:
     - name: Build Docker image
       run: |
         cd docker/fe
-        docker build -t $IMAGE_TAG .
+        docker build -f Dockerfile -t $IMAGE_TAG .
 
     # - name: Push image to Docker Hub
     #   run: |
