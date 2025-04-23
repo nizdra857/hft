@@ -56,7 +56,8 @@ jobs:
     - name: Push Docker image
       run: |
           docker push $IMAGE_TAG
-          docker push $LATEST_TAG    # - name: Set up GKE credentials
+          docker push $LATEST_TAG    
+    # - name: Set up GKE credentials
     #   uses: google-github-actions/get-gke-credentials@v1
     #   with:
     #     cluster_name: ${{ env.GKE_CLUSTER }}
@@ -67,3 +68,20 @@ jobs:
     #   run: |
     #     sed -i "s|__TAG__|$GITHUB_SHA|" k8s/fe-app/deployment.yaml
     #     kubectl apply -f k8s/fe-app/deployment.yaml
+
+        # - name: Auth to GCP
+    #   uses: google-github-actions/auth@v2
+    #   with:
+    #     credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    # - name: Get GKE credentials
+    #   uses: google-github-actions/get-gke-credentials@v2
+    #   with:
+    #     cluster_name: ${{ secrets.GKE_CLUSTER }}
+    #     location: ${{ secrets.GKE_ZONE }}
+    #     project_id: ${{ secrets.GCP_PROJECT }}
+
+    # - name: Deploy canary release
+    #   run: |
+    #     kubectl set image deployment/fe-app fe-app$IMAGE_TAG
+    #     kubectl rollout status deployment/fe-app
