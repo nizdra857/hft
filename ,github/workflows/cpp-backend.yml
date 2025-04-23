@@ -1,0 +1,52 @@
+name: CI/CD - C++ Backend
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ libboost-all-dev
+
+      - name: Build Binary
+        run: |
+          mkdir -p build && cd build
+          cmake .. && make
+
+      - name: Run Unit Tests
+        run: ./build/tests/runTests
+
+      - name: Docker Build
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/hft-backend:${{ github.sha }} .
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push to DockerHub
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/hft-backend:${{ github.sha }}
+
+      - name: Authenticate to GKE
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set GKE Context
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER }}
+          location: ${{ secrets.GKE_ZONE }}
+
+      - name: Deploy to GKE (Canary)
+        run: |
+          sed "s|__TAG__|${{ github.sha }}|g" k8s/backend-deployment.yaml | kubectl apply -f -
+          kubectl rollout status deployment/hft-backend -n default
