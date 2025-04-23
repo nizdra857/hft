@@ -35,9 +35,13 @@ jobs:
     # - name: Run tests
     #   run: pytest tests/
 
+    - name: Set IMAGE_TAG
+      run: echo "IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
+
     - name: Build Docker image
-      run: |
-        docker build -f docker/fe/Dockerfile -t $IMAGE_TAG . 
+      run: docker build -f docker/fe/Dockerfile -t $IMAGE_TAG .
+      env:
+        IMAGE_TAG: ${{ env.IMAGE_TAG }}
 
     # - name: Push image to Docker Hub
     #   run: |
