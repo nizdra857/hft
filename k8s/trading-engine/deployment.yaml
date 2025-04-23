@@ -26,7 +26,7 @@ spec:
                 topologyKey: "kubernetes.io/hostname"
       containers:
         - name: trading-engine
-          image: trading-engine:latest
+          image: nizadra/hft-cpp:latest
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
