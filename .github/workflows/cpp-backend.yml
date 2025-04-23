@@ -2,11 +2,13 @@ name: Build and Deploy C++ App to GKE
 
 on:
   push:
-    paths:
-      - '**.cpp'
-      - 'CMakeLists.txt'
-      - '.github/workflows/cpp.yml'
+    branches: [main]
+    # paths:
+    #   - '**.cpp'
+    #   - 'CMakeLists.txt'
+    #   - '.github/workflows/cpp.yml'
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build-deploy:
