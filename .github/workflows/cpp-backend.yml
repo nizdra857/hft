@@ -1,52 +1,54 @@
-name: CI/CD - C++ Backend
+name: Build and Deploy C++ App to GKE
 
 on:
   push:
-    branches: [main]
+    paths:
+      - '**.cpp'
+      - 'CMakeLists.txt'
+      - '.github/workflows/cpp.yml'
+  pull_request:
 
 jobs:
-  build-test-deploy:
+  build-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake g++ libboost-all-dev
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y cmake g++
 
-      - name: Build Binary
-        run: |
-          mkdir -p build && cd build
-          cmake .. && make
+      - name: Configure CMake
+        run: cmake -S . -B build
 
-      - name: Run Unit Tests
-        run: ./build/tests/runTests
+      - name: Build app
+        run: cmake --build build
 
-      - name: Docker Build
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/hft-backend:${{ github.sha }} .
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/hft-cpp:latest .
 
-      - name: Login to DockerHub
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Push to DockerHub
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/hft-backend:${{ github.sha }}
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/hft-cpp:latest
 
-      - name: Authenticate to GKE
-        uses: google-github-actions/auth@v1
+      - name: Auth to GCP
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Set GKE Context
-        uses: google-github-actions/get-gke-credentials@v1
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
         with:
           cluster_name: ${{ secrets.GKE_CLUSTER }}
           location: ${{ secrets.GKE_ZONE }}
+          project_id: ${{ secrets.GCP_PROJECT }}
 
-      - name: Deploy to GKE (Canary)
+      - name: Deploy to GKE
         run: |
-          sed "s|__TAG__|${{ github.sha }}|g" k8s/backend-deployment.yaml | kubectl apply -f -
-          kubectl rollout status deployment/hft-backend -n default
+          kubectl set image deployment/hft-cpp hft-cpp=${{ secrets.DOCKER_HUB_USERNAME }}/hft-cpp:latest
