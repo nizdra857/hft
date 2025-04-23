@@ -28,27 +28,36 @@ jobs:
       - name: Build Docker image
         run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/hft-cpp:latest .
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      # - name: Login to Docker Hub
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
+      #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Push Docker image
-        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/hft-cpp:latest
+      # - name: Push Docker image
+      #   run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/hft-cpp:latest
 
-      - name: Auth to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      # - name: Auth to GCP
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Get GKE credentials
-        uses: google-github-actions/get-gke-credentials@v2
-        with:
-          cluster_name: ${{ secrets.GKE_CLUSTER }}
-          location: ${{ secrets.GKE_ZONE }}
-          project_id: ${{ secrets.GCP_PROJECT }}
+      # - name: Get GKE credentials
+      #   uses: google-github-actions/get-gke-credentials@v2
+      #   with:
+      #     cluster_name: ${{ secrets.GKE_CLUSTER }}
+      #     location: ${{ secrets.GKE_ZONE }}
+      #     project_id: ${{ secrets.GCP_PROJECT }}
 
-      - name: Deploy to GKE
-        run: |
-          kubectl set image deployment/hft-cpp hft-cpp=${{ secrets.DOCKER_HUB_USERNAME }}/hft-cpp:latest
+      # - name: Deploy canary release
+      #   run: |
+      #     kubectl set image deployment/hft-cpp-canary hft-cpp=$IMAGE_TAG
+      #     kubectl rollout status deployment/hft-cpp-canary
+
+      # - name: Wait & verify canary
+      #   run: sleep 60  # or run health checks here
+
+      # - name: Promote canary to primary
+      #   run: |
+      #     kubectl set image deployment/hft-cpp-primary hft-cpp=$IMAGE_TAG
+      #     kubectl rollout status deployment/hft-cpp-primary
