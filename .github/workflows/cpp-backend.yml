@@ -22,10 +22,14 @@ jobs:
         run: sudo apt update && sudo apt install -y cmake g++
 
       - name: Configure CMake
-        run: cmake -S . -B build
+        run: |
+          cd src/cpp-trading-engine
+          cmake -S . -B build
 
       - name: Build app
-        run: cmake --build build
+        run: |
+          cd src/cpp-trading-engine
+          cmake --build build
 
       - name: Build Docker image
         run: |
