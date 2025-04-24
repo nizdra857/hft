@@ -1,4 +1,4 @@
-name: Security - SAST + SBOM
+name: CPP SAST + SBOM
 
 on:
   push:
