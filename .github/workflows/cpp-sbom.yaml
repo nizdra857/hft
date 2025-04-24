@@ -38,11 +38,21 @@ jobs:
         uses: anchore/scan-action@v3
         with:
           image: hft-cpp-scan
-          acs-report-enable: true
           output-format: table
 
-      - name: Upload Trivy SBOM Report
+      - name: Upload Trivy Report
         uses: actions/upload-artifact@v4
         with:
           name: trivy-sbom-report
           path: trivy-sbom-report.txt
+
+      - name: Upload Grype Report
+        run: |
+          grype hft-cpp-scan -o table > grype-sbom-report.txt
+        shell: bash
+
+      - name: Upload Grype Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: grype-sbom-report
+          path: grype-sbom-report.txt
