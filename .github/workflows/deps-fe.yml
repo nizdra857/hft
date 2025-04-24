@@ -1,0 +1,46 @@
+name: Py Dependencies & Dockerfile
+
+on:
+  pull_request:
+    paths:
+      - 'src/fe/**'
+      - 'docker/fe/**'
+  workflow_dispatch:
+
+jobs:
+  deps-dockerfile-scan-fe:
+    name: Python Dependency + Dockerfile Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Trivy Dockerfile Scan (FE)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: ./docker/fe/
+          format: 'table'
+          output: trivy-fe-dockerfile-report.txt
+
+      - name: Python Dependency Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: ./src/fe/
+          format: 'table'
+          output: trivy-fe-deps-report.txt
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload FE Dockerfile Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fe-dockerfile-report
+          path: trivy-fe-dockerfile-report.txt
+
+      - name: Upload Python Dependency Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fe-deps-report
+          path: trivy-fe-deps-report.txt
