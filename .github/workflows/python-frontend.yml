@@ -3,6 +3,8 @@ name: Frontend Python CI/CD
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/fe/**'
   pull_request:
   workflow_dispatch:
 
