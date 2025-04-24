@@ -1,2 +1,12 @@
 fastapi==0.110.2
 uvicorn[standard]==0.29.0
+
+# Prometheus
+prometheus_client==0.20.0
+
+# OpenTelemetry
+opentelemetry-api==1.23.0
+opentelemetry-sdk==1.23.0
+opentelemetry-exporter-otlp==1.23.0
+opentelemetry-instrumentation==0.44b0
+opentelemetry-instrumentation-fastapi==0.44b0
