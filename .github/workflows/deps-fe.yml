@@ -1,4 +1,4 @@
-name: Py Dependencies & Dockerfile
+name: FE Deps & Dockerfile
 
 on:
   pull_request:

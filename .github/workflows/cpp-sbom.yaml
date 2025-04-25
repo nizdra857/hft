@@ -1,4 +1,4 @@
-name: CPP SAST + SBOM
+name: CPP Image + SAST + SBOM
 
 on:
   push:
@@ -10,9 +10,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  sast-sbom:
+  cpp-security:
     runs-on: ubuntu-latest
-    name: Run SAST and generate SBOM
+    name: Run SAST, Docker Image Scan & SBOM (C++)
 
     steps:
       - name: Checkout code
@@ -21,38 +21,39 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image (no push)
-        run: |
-          docker build -f docker/cpp-trading-engine/Dockerfile -t hft-cpp-scan .
+      - name: Build C++ Docker Image (no push)
+        run: docker build -f docker/cpp-trading-engine/Dockerfile -t hft-cpp-scan .
 
-      - name: Trivy SAST + SBOM
+      - name: Trivy Image Scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: hft-cpp-scan
           format: 'table'
           scan-type: 'image'
-          output: trivy-sbom-report.txt
+          output: trivy-cpp-sbom-report.txt
           severity: 'CRITICAL,HIGH'
-
-      - name: Grype SBOM Scan
-        uses: anchore/scan-action@v3
-        with:
-          image: hft-cpp-scan
-          output-format: table
 
       - name: Upload Trivy Report
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-sbom-report
-          path: trivy-sbom-report.txt
+          name: trivy-cpp-sbom-report
+          path: trivy-cpp-sbom-report.txt
 
       - name: Upload Grype Report
-        run: |
-          grype hft-cpp-scan -o table > grype-sbom-report.txt
+        run: grype hft-cpp-scan -o table > grype-cpp-sbom-report.txt
         shell: bash
 
       - name: Upload Grype Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: grype-sbom-report
-          path: grype-sbom-report.txt
+          name: grype-cpp-sbom-report
+          path: grype-cpp-sbom-report.txt
+
+      - name: Run Cppcheck
+        run: cppcheck --enable=all --inconclusive --quiet src/cpp-trading-engine/ 2> cppcheck-report.txt || true
+
+      - name: Upload Cppcheck Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cppcheck-report
+          path: cppcheck-report.txt
