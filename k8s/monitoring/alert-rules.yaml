@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-rules
+  namespace: monitoring
+spec:
+  groups:
+    - name: general.rules
+      rules:
+        - alert: InstanceDown
+          expr: up == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Instance {{ $labels.instance }} down"
+            description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
